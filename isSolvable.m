@@ -5,4 +5,13 @@ function x = isSolvable(A)
 % Return:
 % x - boolean true or false
 
+%finding the iteration matrix
+D = diag(A);
+IT = -inv(diag(D))*(A-diag(D));
+spect_radi= max(abs(eig(IT)));
+if spect_radi>1.0
+    x=false;
+else
+    x=true;
+end
 end
