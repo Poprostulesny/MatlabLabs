@@ -1,28 +1,31 @@
-function [max_error, is_accurate, reason, solver_success, x_my, x_true] = validateSolver(A, b, opts)
-% Tests a Hessenberg matrix solving algorithm for Ax=b SLE
+function [max_error, success, reason, x_my, x_true] = validateSolver(A, b, opts)
+% Tests a Hessenberg matrix solving algorithm for Ax=b SLE. Tests against Matlabs built-in function
 % Input:
 % A - Hessenberg Matrix
 % b - answer vector
-% (optional)tolerance - maximum allowed difference between answer and
-% ground truth
+% (optional) opts - named field of optional values:
+%       tolerance - maximum allowed difference between answer and ground truth defaults to 1e-3
+%       maxIter - maximum number of iterations defaults to 1e3
 % Return:
 % max_error - largest difference between the two solution vectors
-% is_accurate - boolean flag, true if max_error<tolerance
+% success - boolean flag, true if max_error<tolerance
+% reason - reason for failing
+% x_my - solution vector returned by the solver
+% x_true - solution vector obtained by matlabs built-in function
 arguments
     A
     b
     opts.tolerance = 1e-3
     opts.maxIter = 1000
 end
-is_accurate=false;
+success=false;
 max_error=inf;
-solver_success=false;
 x_my=[]; 
 x_true=A\b;
 
 
 try
-    [x_my, solver_success, steps]= SolveHessenberg(A, b, tolerance=opts.tolerance, maxIter=opts.maxIter);
+    [x_my, solver_success, reason, ~]= SolveHessenberg(A, b, tolerance=opts.tolerance, maxIter=opts.maxIter);
 
 catch exc
     warning(exc.message)
@@ -30,24 +33,26 @@ catch exc
     return;
 end
 
-max_error=norm(x_my-x_true,inf);
-
-if steps >= opts.maxIter
-    reason = "Didn't converge in specified time";
+if solver_success~=true
     return;
 end
+
+
+max_error=norm(x_my-x_true,inf);
 
 if any(~isfinite(x_my))
     reason = "Returned NaN or inf";
     return
 end
 
+
 if max_error>=opts.tolerance
-    is_accurate=false;
+    success=false;
     reason = "Solution inaccurate";
 else
-    is_accurate=true;
+    success=true;
     reason="ok";
 end
+
 
 end

@@ -1,11 +1,19 @@
 function [A,b] = GenerateNotFriendlyHessenberg(size, opts)
 % Generates random Hessenberg matrices which sattisfy the necessary
-% solvability criterion
+% solvability criterion, but take long to calculate
 %   A=D+R
 %   Bj = -D^(-1)*R
 %   We first choose the matrix Bj with p(Bj)<1
 %   Than R = -DBj
-%   And therefor A = D-DBj=D(I-Bj)
+%   And therefore A = D-DBj=D(I-Bj)
+% Input params:
+% size - desired size of the square matrix
+% (optional) opts - named field of optional values:
+%       maxVal - absolute value of the biggest possible element in the matrix, defaults to 1e5
+% Returns:
+% A - Hessenberg Matrix, 
+% b - RHS of equation, 
+
 arguments
     size
     opts.maxVal = 1e5

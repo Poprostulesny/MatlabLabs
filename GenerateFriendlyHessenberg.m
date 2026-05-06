@@ -1,6 +1,14 @@
 function [A,b] = GenerateFriendlyHessenberg(size, opts)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+% Generates random Hessenberg matrices which sattisfy the necessary
+% solvability criterion, and have strong diagonal dominance - ideal candidates for solving by Jacobi method
+% Input params:
+% size - desired size of the square matrix
+% (optional) opts - named field of optional values:
+%       maxVal - absolute value of the biggest possible element in the matrix, defaults to 1e5
+% Returns:
+% A - Hessenberg Matrix, 
+% b - RHS of equation, 
+
 arguments
     size
     opts.maxVal = 1e5

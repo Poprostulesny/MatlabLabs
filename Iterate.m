@@ -7,17 +7,20 @@ function x_new = Iterate(A, b, x)
 % Return:
 % x_new - updated solution array
 
-error="";
 n = size(A,1);
 x_new = zeros(n,1);
 D = diag(A);
 is_upper=true;
+
+% detecting whether we deal with an upper or a lower hessenberg matrix
 if size(A,1)>2 && A(size(A,1),1)~=0
     is_upper=false;
 end
 
 for y = 1:n
     rowSum = 0;
+
+    % calculating column coordinates for a given row which are nonzero
     if is_upper==true
          xstart = max(1, y-1);
          xend = n;
@@ -26,16 +29,19 @@ for y = 1:n
         xend = min(n,y+1);
     end
     
+    % iteration
     for xi = xstart:xend
         if y==xi
             continue
         end
         rowSum = rowSum + A(y,xi)*x(xi);
     end
+
+    % detecting division by zero errors
     if D(y)==0
         error("Division by zero encountered")
-        return
     end
+    
     x_new(y) = (b(y)-rowSum)/D(y);
 end
 end

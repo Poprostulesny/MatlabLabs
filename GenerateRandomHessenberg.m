@@ -1,6 +1,13 @@
 function [A,b] = GenerateRandomHessenberg(size, opts)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+% Generates a random Hessenberg matrix, with a sensible conditional number and no zeros on the diagonal
+% Input params:
+% size - desired size of the square matrix
+% (optional) opts - named field of optional values:
+%       maxVal - absolute value of the biggest possible element in the matrix, defaults to 1e5
+% Returns:
+% A - Hessenberg Matrix, 
+% b - RHS of equation, 
+
 arguments
     size
     opts.maxVal = 1e3
