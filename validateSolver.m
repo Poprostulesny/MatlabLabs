@@ -21,20 +21,23 @@ x_my=[];
 x_true=A\b;
 
 
+try
+    [x_my, solver_success, steps]= SolveHessenberg(A, b, tolerance=opts.tolerance, maxIter=opts.maxIter);
 
-[x_my, solver_success, steps]= SolveHessenberg(A, b, tolerance=opts.tolerance, maxIter=opts.maxIter);
+catch exc
+    warning(exc.message)
+    reason=exc.message;
+    return;
+end
+
 max_error=norm(x_my-x_true,inf);
 
 if steps >= opts.maxIter
     reason = "Didn't converge in specified time";
     return;
 end
-if any(diag(A)==0)
-    reason="zero diagonal"; 
-    return
-end
+
 if any(~isfinite(x_my))
-    % max_error=inf;
     reason = "Returned NaN or inf";
     return
 end

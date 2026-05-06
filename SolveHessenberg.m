@@ -28,10 +28,15 @@ steps = 0;
 
 while res>opts.tolerance
 
-    [x_new, error]=Iterate(A,b,x);
-    if error~=""
+    try
+        x_new=Iterate(A,b,x);
+    catch exc
+        error=exc.message;
         success=false;
+        x=x_new;
+        error(error+" Program execution stopped prematurely.")
     end
+    
     steps=steps+1;
     res = norm(x-x_new,inf);
     x=x_new;

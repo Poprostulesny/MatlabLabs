@@ -1,6 +1,6 @@
 function [allPassed, pass_num, fail_num, fail_reason, A_fail, b_fail, x_alg, x_true, success_by_size,median_err_by_size, sizes] = bulkTest(minSize, maxSize, opts)
 % Bulk tests the SLE solver for consecutively larger, randomly generated
-% Hessenberg matrices. Stops when first divergence encountered
+% Hessenberg matrices.
 % Input:
 % minSize - minimal size of matrix used during the testing
 % maxSize - maximal size of matrix reached during the testing

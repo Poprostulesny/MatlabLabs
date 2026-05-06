@@ -1,4 +1,4 @@
-function [x_new, error] = Iterate(A, b, x)
+function x_new = Iterate(A, b, x)
 % Computes one iteration of the Jacobi method for a Hessenberg matrix
 % Input:
 % A - Hessenberg Matrix
@@ -33,7 +33,7 @@ for y = 1:n
         rowSum = rowSum + A(y,xi)*x(xi);
     end
     if D(y)==0
-        error="Divide by zero";
+        error("Division by zero encountered")
         return
     end
     x_new(y) = (b(y)-rowSum)/D(y);

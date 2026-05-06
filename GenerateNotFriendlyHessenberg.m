@@ -25,7 +25,7 @@ end
 B(1:size+1:end)=0;
 
 %forcing B to have rhoB<1
-target_rhoB = 0.5+(0.999-0.5)*rand(1);
+target_rhoB = 0.95+(0.999-0.95)*rand(1);
 rhoB = max(abs(eig(B)));
 if rhoB>target_rhoB
     B = target_rhoB*B/rhoB;

@@ -7,7 +7,7 @@ function x_new = Iterate(A, b, x)
 % Return:
 % x_new - updated solution array
 D=diag(A);
-R= H-diag(D);
+R= A-diag(D);
 x_new = (b-R*x) ./D;
 
 end
