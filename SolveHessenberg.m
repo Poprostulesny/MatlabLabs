@@ -31,10 +31,9 @@ while res>opts.tolerance
     try
         x_new=Iterate(A,b,x);
     catch exc
-        error=exc.message;
+       
         success=false;
-        x=x_new;
-        error(error+" Program execution stopped prematurely.")
+        return;
     end
     
     steps=steps+1;

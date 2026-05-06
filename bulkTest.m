@@ -67,13 +67,7 @@ for s = sizes
     end
     
     valid_errors = abs(errors);
-    valid_errors(isnan(valid_errors)) = -1;
-    median_value = median(valid_errors);
-    if median_value == -1
-        median_err_by_size(y) = NaN;
-    else
-        median_err_by_size(y) = median_value;
-    end
+    median_err_by_size = median(valid_errors, "omitnan");
     success_by_size(y)=succ_loc;
     y=y+1;
 end
