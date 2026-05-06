@@ -14,13 +14,14 @@ end
 d=1+rand(size,1);
 D=diag(d);
 
-
+%randomly choosing an upper or a lower matrix
 if randi([0,1],1,1)==1
     B = tril(randn(size),1);
 else
     B = triu(randn(size),-1);
 end
 
+%setting diagonal entries to zero
 B(1:size+1:end)=0;
 
 %forcing B to have rhoB<1

@@ -2,19 +2,25 @@ function [allPassed, pass_num, fail_num, fail_reason, A_fail, b_fail, x_alg, x_t
 % Bulk tests the SLE solver for consecutively larger, randomly generated
 % Hessenberg matrices. Stops when first divergence encountered
 % Input:
-% numTest - number of iterations of testing
 % minSize - minimal size of matrix used during the testing
 % maxSize - maximal size of matrix reached during the testing
-% maxVal - maximal value of a point in a matrix
-% numPerSize - no. of times a single matrix size is tested
-% (optional)tolerance - error tolerance
+% opts.maxVal - maximal value of a point in a matrix
+% opts.numPerSize - no. of times a single matrix size is tested
+% opts.tolerance - error tolerance
+% opts.maxIter - maximal no. of solver iterations
+% opts.generator - function handle for the matrix generator
 % Return:
-% success - whether the the solution passed
-% pass_num - number of the test on which it stopped
-% A - last matrix tested
-% b - last solution vector tested
-% x_a - answer to the last test from the algorithm
-% x_g - ground truth answer by matlabs built in function
+% allPassed - whether all of the solutions passed
+% pass_num - number of passed tests
+% fail_num - number of failed tests
+% fail_reason - reason for the last failure encountered
+% A_fail - last matrix for which the solution failed
+% b_fail - last vector for which the solution failed
+% x_alg - answer to the last test from the algorithm
+% x_true - ground truth answer by matlabs built in function
+% success_by_size - no. of passed tests for each matrix size
+% median_err_by_size - median error for each matrix size
+% sizes - vector of tested matrix sizes
 
 arguments
     minSize
@@ -28,8 +34,8 @@ end
 
 
 sizes= ceil(minSize):(maxSize);
-median_err_by_size = zeros(size(sizes,1),1);
-success_by_size = zeros(size(sizes,1),1);
+median_err_by_size = NaN(numel(sizes),1);
+success_by_size = zeros(numel(sizes),1);
 allPassed=true;
 fail_num=0;
 pass_num=0;
@@ -39,9 +45,10 @@ x_alg=[];
 x_true=[];
 y=1;
 fail_reason="ok";
+
 for s = sizes
     succ_loc=0;
-    errors = zeros(opts.numPerSize,1);
+    errors = NaN(opts.numPerSize,1);
     for i=1:opts.numPerSize
         [A,b] = opts.generator(s, maxVal=opts.maxVal);
         
@@ -58,7 +65,15 @@ for s = sizes
         end
        
     end
-    median_err_by_size(y)=median(abs(errors));
+    
+    valid_errors = abs(errors);
+    valid_errors(isnan(valid_errors)) = -1;
+    median_value = median(valid_errors);
+    if median_value == -1
+        median_err_by_size(y) = NaN;
+    else
+        median_err_by_size(y) = median_value;
+    end
     success_by_size(y)=succ_loc;
     y=y+1;
 end
