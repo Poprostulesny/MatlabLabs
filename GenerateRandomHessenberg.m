@@ -1,34 +1,37 @@
-function [A,b] = GenerateRandomHessenberg(size, opts)
-% Generates a random Hessenberg matrix, with a sensible conditional number and no zeros on the diagonal
+function [A, b] = GenerateRandomHessenberg(matrixSize, opts)
+% Generates a random Hessenberg matrix with a reasonable condition number
+% and no zeros on the diagonal.
 % Input params:
-% size - desired size of the square matrix
+% matrixSize - desired size of the square matrix
 % (optional) opts - named field of optional values:
-%       maxVal - absolute value of the biggest possible element in the matrix, defaults to 1e5
+%       maxVal - absolute value of the largest possible element in the matrix, defaults to 1e3
 % Returns:
-% A - Hessenberg Matrix, 
-% b - RHS of equation, 
+% A - Hessenberg matrix
+% b - right-hand-side vector
 
 arguments
-    size
+    matrixSize
     opts.maxVal = 1e3
 end
 
-A=randi([-opts.maxVal, opts.maxVal],size,size);
+A = randi([-opts.maxVal, opts.maxVal], matrixSize, matrixSize);
 
-if randi([0,1],1,1)==1
-    A = tril(A,1);%lower hessenberg
+if randi([0, 1], 1, 1) == 1
+    A = tril(A, 1); % Lower Hessenberg
 else
-    A = triu(A,-1);%upper hessenberg
+    A = triu(A, -1); % Upper Hessenberg
 end
-while rcond(A)<1e-10
-    A=randi([-opts.maxVal, opts.maxVal],size,size);
 
-    if randi([0,1],1,1)==1
-        A = tril(A,1);%lower hessenberg
+while rcond(A) < 1e-10
+    A = randi([-opts.maxVal, opts.maxVal], matrixSize, matrixSize);
+
+    if randi([0, 1], 1, 1) == 1
+        A = tril(A, 1); % Lower Hessenberg
     else
-        A = triu(A,-1);%upper hessenberg
+        A = triu(A, -1); % Upper Hessenberg
     end
 end
-%losowanie b
-b = randi([-opts.maxVal, opts.maxVal],size,1);
+
+% Draw the right-hand-side vector.
+b = randi([-opts.maxVal, opts.maxVal], matrixSize, 1);
 end

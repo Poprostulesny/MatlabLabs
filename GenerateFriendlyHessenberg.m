@@ -1,37 +1,38 @@
-function [A,b] = GenerateFriendlyHessenberg(size, opts)
-% Generates random Hessenberg matrices which sattisfy the necessary
-% solvability criterion, and have strong diagonal dominance - ideal candidates for solving by Jacobi method
+function [A, b] = GenerateFriendlyHessenberg(matrixSize, opts)
+% Generates random Hessenberg matrices that satisfy the necessary
+% solvability criterion and have strong diagonal dominance, making them
+% ideal candidates for the Jacobi method.
 % Input params:
-% size - desired size of the square matrix
+% matrixSize - desired size of the square matrix
 % (optional) opts - named field of optional values:
-%       maxVal - absolute value of the biggest possible element in the matrix, defaults to 1e5
+%       maxVal - absolute value of the largest possible element in the matrix, defaults to 1e5
 % Returns:
-% A - Hessenberg Matrix, 
-% b - RHS of equation, 
+% A - Hessenberg matrix
+% b - right-hand-side vector
 
 arguments
-    size
+    matrixSize
     opts.maxVal = 1e5
 end
-A=randi([-opts.maxVal, opts.maxVal],size,size);
 
-if randi([0,1],1,1)==1
-    A = tril(A,1);%lower hessenberg
+A = randi([-opts.maxVal, opts.maxVal], matrixSize, matrixSize);
+
+if randi([0, 1], 1, 1) == 1
+    A = tril(A, 1); % Lower Hessenberg
 else
-    A = triu(A,-1);%upper hessenberg
+    A = triu(A, -1); % Upper Hessenberg
 end
 
-
-
 D = diag(diag(A));
-rowSums= sum(abs(A-D),2);
+rowSums = sum(abs(A - D), 2);
 
-%losowanie wartości na przekatnej (suma wartosci w rzedzie + losowa liczba)
-diagVals = 2*rowSums + randi([1, max(1, opts.maxVal)],size,1);
-%losowanie znaku dla przekatnej
-signs = 2*randi([0,1],size,1)-1;
-A = A-D+diag(diagVals.*signs);
+% Draw diagonal values larger than the off-diagonal row sum(2*sum + some random value).
+diagVals = 2 * rowSums + randi([1, max(1, opts.maxVal)], matrixSize, 1);
 
-%losowanie b
-b = randi([-opts.maxVal, opts.maxVal],size,1);
+% Draw random signs for the diagonal entries.
+signs = 2 * randi([0, 1], matrixSize, 1) - 1;
+A = A - D + diag(diagVals .* signs);
+
+% Draw the right-hand-side vector.
+b = randi([-opts.maxVal, opts.maxVal], matrixSize, 1);
 end

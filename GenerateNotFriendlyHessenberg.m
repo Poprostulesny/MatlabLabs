@@ -1,45 +1,45 @@
-function [A,b] = GenerateNotFriendlyHessenberg(size, opts)
-% Generates random Hessenberg matrices which sattisfy the necessary
-% solvability criterion, but take long to calculate
-%   A=D+R
+function [A, b] = GenerateNotFriendlyHessenberg(matrixSize, opts)
+% Generates random Hessenberg matrices that satisfy the necessary
+% solvability criterion, but take longer to solve.
+%   A = D + R
 %   Bj = -D^(-1)*R
-%   We first choose the matrix Bj with p(Bj)<1
-%   Than R = -DBj
-%   And therefore A = D-DBj=D(I-Bj)
+%   We first choose the matrix Bj with p(Bj) < 1
+%   Then R = -DBj
+%   Therefore A = D - DBj = D(I - Bj)
 % Input params:
-% size - desired size of the square matrix
+% matrixSize - desired size of the square matrix
 % (optional) opts - named field of optional values:
-%       maxVal - absolute value of the biggest possible element in the matrix, defaults to 1e5
+%       maxVal - absolute value of the largest possible element in the matrix, defaults to 1e5
 % Returns:
-% A - Hessenberg Matrix, 
-% b - RHS of equation, 
+% A - Hessenberg matrix
+% b - right-hand-side vector
 
 arguments
-    size
+    matrixSize
     opts.maxVal = 1e5
 end
 
-d=1+rand(size,1);
-D=diag(d);
+d = 1 + rand(matrixSize, 1);
+D = diag(d);
 
-%randomly choosing an upper or a lower matrix
-if randi([0,1],1,1)==1
-    B = tril(randn(size),1);
+% Randomly choose an upper or lower Hessenberg matrix.
+if randi([0, 1], 1, 1) == 1
+    B = tril(randn(matrixSize), 1);
 else
-    B = triu(randn(size),-1);
+    B = triu(randn(matrixSize), -1);
 end
 
-%setting diagonal entries to zero
-B(1:size+1:end)=0;
+% Set diagonal entries to zero.
+B(1:matrixSize + 1:end) = 0;
 
-%forcing B to have rhoB<1
-target_rhoB = 0.95+(0.999-0.95)*rand(1);
+% Force B to have rho(B) < 1.
+target_rhoB = 0.95 + (0.999 - 0.95) * rand(1);
 rhoB = max(abs(eig(B)));
-if rhoB>target_rhoB
-    B = target_rhoB*B/rhoB;
+if rhoB > target_rhoB
+    B = target_rhoB * B / rhoB;
 end
-A = D*(eye(size)-B);
+A = D * (eye(matrixSize) - B);
 
-%losowanie b
-b = randi([-opts.maxVal, opts.maxVal],size,1);
+% Draw the right-hand-side vector.
+b = randi([-opts.maxVal, opts.maxVal], matrixSize, 1);
 end

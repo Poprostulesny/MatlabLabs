@@ -1,4 +1,4 @@
-function [allPassed, pass_num, fail_num, fail_reason, A_fail, b_fail, x_alg, x_true, success_by_size,median_err_by_size, sizes] = bulkTest(minSize, maxSize, opts)
+function [allPassed, passCount, failCount, failReason, A_fail, b_fail, x_alg, x_true, successBySize, medianErrorBySize, sizes] = bulkTest(minSize, maxSize, opts)
 % Bulk tests the SLE solver for consecutively larger, randomly generated
 % Hessenberg matrices.
 % Input:
@@ -13,15 +13,15 @@ function [allPassed, pass_num, fail_num, fail_reason, A_fail, b_fail, x_alg, x_t
 %       stopAtFirst - boolean flag describing whether the function should stop at the first failed matrix, however then most of the analysis tables will be incomplete, defaults to false
 % Return:
 % allPassed - whether all of the solutions passed
-% pass_num - number of passed tests
-% fail_num - number of failed tests
-% fail_reason - reason for the last failure encountered
+% passCount - number of passed tests
+% failCount - number of failed tests
+% failReason - reason for the last failure encountered
 % A_fail - last matrix for which the solution failed
 % b_fail - last vector for which the solution failed
 % x_alg - answer to the last test from the algorithm
-% x_true - ground truth answer by matlabs built in function
-% success_by_size - no. of passed tests for each matrix size
-% median_err_by_size - median error for each matrix size
+% x_true - ground truth answer from MATLAB's built-in solver
+% successBySize - number of passed tests for each matrix size
+% medianErrorBySize - median error for each matrix size
 % sizes - vector of tested matrix sizes
 
 arguments
@@ -35,40 +35,40 @@ arguments
     opts.stopAtFirst = false;
 end
 
-% initializing return values
-sizes= ceil(minSize):(maxSize);
-median_err_by_size = NaN(numel(sizes),1);
-success_by_size = zeros(numel(sizes),1);
-allPassed=true;
-fail_num=0;
-pass_num=0;
-A_fail=[];
-b_fail=[];
-x_alg=[];
-x_true=[];
-y=1;
-fail_reason="ok";
+% Initialize return values.
+sizes = ceil(minSize):maxSize;
+medianErrorBySize = NaN(numel(sizes), 1);
+successBySize = zeros(numel(sizes), 1);
+allPassed = true;
+failCount = 0;
+passCount = 0;
+A_fail = [];
+b_fail = [];
+x_alg = [];
+x_true = [];
+sizeIdx = 1;
+failReason = "ok";
 
-% testing phase
+% Testing phase.
 for s = sizes
-    succ_loc=0;
-    errors = NaN(opts.numPerSize,1);
+    successCountForSize = 0;
+    errors = NaN(opts.numPerSize, 1);
 
-    % testing pass for a given size
-    for i=1:opts.numPerSize
+    % Testing pass for a given size.
+    for i = 1:opts.numPerSize
 
-        [A,b] = opts.generator(s, maxVal=opts.maxVal);
-        [errors(i), is_acc, fr, x_alg, x_true]= validateSolver(A, b, tolerance=opts.tolerance, maxIter=opts.maxIter);
+        [A, b] = opts.generator(s, maxVal=opts.maxVal);
+        [errors(i), isAccepted, failureReason, x_alg, x_true] = validateSolver(A, b, tolerance=opts.tolerance, maxIter=opts.maxIter);
 
-        if is_acc==true
-            pass_num=pass_num+1;
-            succ_loc=succ_loc+1;
+        if isAccepted == true
+            passCount = passCount + 1;
+            successCountForSize = successCountForSize + 1;
         else
-            allPassed=false;
-            fail_num=fail_num+1;
-            A_fail=A;
-            b_fail=b;
-            fail_reason=fr;
+            allPassed = false;
+            failCount = failCount + 1;
+            A_fail = A;
+            b_fail = b;
+            failReason = failureReason;
             if opts.stopAtFirst
                 warning("Stopped prematurely due to the stopAtFirst flag being set. Most analysis arrays will therefore be incomplete.")
                 return;
@@ -77,15 +77,16 @@ for s = sizes
        
     end
     
-    %calculating data used for analysis
+    % Calculate data used for analysis.
     valid_errors = abs(errors);
-    median_err_by_size(y) = median(valid_errors, "omitnan");
+    medianErrorBySize(sizeIdx) = median(valid_errors, "omitnan");
 
-    if(all(isnan(valid_errors)))
-        median_err_by_size(y)=Nan;
+    if all(isnan(valid_errors))
+        medianErrorBySize(sizeIdx) = NaN;
     end
-    success_by_size(y)=succ_loc;
+    successBySize(sizeIdx) = successCountForSize;
 
-    y=y+1;
+    sizeIdx = sizeIdx + 1;
 end
+
 end

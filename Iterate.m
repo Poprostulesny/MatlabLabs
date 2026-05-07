@@ -1,47 +1,47 @@
 function x_new = Iterate(A, b, x)
-% Computes one iteration of the Jacobi method for a Hessenberg matrix
+% Computes one iteration of the Jacobi method for a Hessenberg matrix.
 % Input:
-% A - Hessenberg Matrix
-% b - answer vector
+% A - Hessenberg matrix
+% b - right-hand-side vector
 % x - current solution vector
 % Return:
-% x_new - updated solution array
+% x_new - updated solution vector
 
-n = size(A,1);
-x_new = zeros(n,1);
+n = size(A, 1);
+x_new = zeros(n, 1);
 D = diag(A);
-is_upper=true;
+isUpper = true;
 
-% detecting whether we deal with an upper or a lower hessenberg matrix
-if size(A,1)>2 && A(size(A,1),1)~=0
-    is_upper=false;
+% Detect whether we are working with an upper or lower Hessenberg matrix.
+if size(A, 1) > 2 && A(size(A, 1), 1) ~= 0
+    isUpper = false;
 end
 
 for y = 1:n
     rowSum = 0;
 
-    % calculating column coordinates for a given row which are nonzero
-    if is_upper==true
-         xstart = max(1, y-1);
-         xend = n;
+    % Calculate column bounds for nonzero entries in the current row.
+    if isUpper == true
+         xStart = max(1, y - 1);
+         xEnd = n;
     else
-        xstart = 1;
-        xend = min(n,y+1);
+        xStart = 1;
+        xEnd = min(n, y + 1);
     end
     
-    % iteration
-    for xi = xstart:xend
-        if y==xi
+    % Compute the next Jacobi iterate.
+    for xi = xStart:xEnd
+        if y == xi
             continue
         end
-        rowSum = rowSum + A(y,xi)*x(xi);
+        rowSum = rowSum + A(y, xi) * x(xi);
     end
 
-    % detecting division by zero errors
-    if D(y)==0
+    % Detect division-by-zero errors.
+    if D(y) == 0
         error("Division by zero encountered")
     end
     
-    x_new(y) = (b(y)-rowSum)/D(y);
+    x_new(y) = (b(y) - rowSum) / D(y);
 end
 end

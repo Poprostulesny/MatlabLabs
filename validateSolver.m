@@ -1,44 +1,45 @@
 function [max_error, success, reason, x_my, x_true] = validateSolver(A, b, opts)
-% Tests a Hessenberg matrix solving algorithm for Ax=b SLE. Tests against Matlabs built-in function
+% Tests a Hessenberg matrix solver for the linear system Ax = b.
+% Compares the result against MATLAB's built-in solver.
 % Input:
-% A - Hessenberg Matrix
-% b - answer vector
+% A - Hessenberg matrix
+% b - right-hand-side vector
 % (optional) opts - named field of optional values:
-%       tolerance - maximum allowed difference between answer and ground truth defaults to 1e-3
-%       maxIter - maximum number of iterations defaults to 1e3
+%       tolerance - maximum allowed difference between answer and ground truth, defaults to 1e-3
+%       maxIter - maximum number of iterations, defaults to 1e3
 % Return:
 % max_error - largest difference between the two solution vectors
-% success - boolean flag, true if max_error<tolerance
+% success - boolean flag, true if max_error < tolerance
 % reason - reason for failing
 % x_my - solution vector returned by the solver
-% x_true - solution vector obtained by matlabs built-in function
+% x_true - solution vector obtained by MATLAB's built-in solver
 arguments
     A
     b
     opts.tolerance = 1e-3
     opts.maxIter = 1000
 end
-success=false;
-max_error=inf;
-x_my=[]; 
-x_true=A\b;
+
+success = false;
+max_error = inf;
+x_my = [];
+x_true = A \ b;
 
 
 try
-    [x_my, solver_success, reason, ~]= SolveHessenberg(A, b, tolerance=opts.tolerance, maxIter=opts.maxIter);
+    [x_my, solver_success, reason, ~] = SolveHessenberg(A, b, tolerance=opts.tolerance, maxIter=opts.maxIter);
 
 catch exc
     warning(exc.message)
-    reason=exc.message;
+    reason = exc.message;
     return;
 end
 
-if solver_success~=true
+if solver_success ~= true
     return;
 end
 
-
-max_error=norm(x_my-x_true,inf);
+max_error = norm(x_my - x_true, inf);
 
 if any(~isfinite(x_my))
     reason = "Returned NaN or inf";
@@ -47,12 +48,11 @@ end
 
 
 if max_error>=opts.tolerance
-    success=false;
+    success = false;
     reason = "Solution inaccurate";
 else
-    success=true;
-    reason="ok";
+    success = true;
+    reason = "ok";
 end
-
 
 end

@@ -1,16 +1,16 @@
 function [x, success, reason, steps] = SolveHessenberg(A, b, opts)
-% Solves a SLE Ax=b by the Jacobi Method for a Hessenberg Matrix.
+% Solves the linear system Ax = b using the Jacobi method for a Hessenberg matrix.
 % Input params:
-% A - Hessenberg Matrix, 
-% b - result vector, 
+% A - Hessenberg matrix
+% b - right-hand-side vector
 % (optional) opts - named field of optional values:
-%       x - initial guess, defaults to zero vector,
-%       tolerance - tolerance with which we want to find the answer defaults to 1e-6,
-%       maxIter - maximum number of iterations defaults to 1e3,
+%       tolerance - tolerance with which we want to find the answer, defaults to 1e-6
+%       maxIter - maximum number of iterations, defaults to 1e3
 % Returns:
-% x - the solution array, 
-% success - whether the method succeeded, or error value
-% steps - the number of steps it took
+% x - solution vector
+% success - whether the method succeeded
+% reason - reason for failure, or "ok" on success
+% steps - number of iterations performed
 arguments
     A
     b
@@ -18,38 +18,39 @@ arguments
     opts.maxIter = 1000
 end
 
+x = zeros(size(A, 1), 1);
 
-x = zeros(size(A,1),1);
-
-% initializing return values
-success=true;
-res = opts.tolerance*10;
+% Initialize return values.
+success = true;
 steps = 0;
-reason="ok";
+reason = "ok";
 
-% testing loop
-while res>opts.tolerance && residual>opts.tolerance
+% Iteration loop.
+while true
 
     try
-        x_new=Iterate(A,b,x);
+        x_new = Iterate(A, b, x);
     catch exc
-       
-        success=false;
-        reason=exc.message;
+        success = false;
+        reason = exc.message;
         return;
     end
     
-    steps=steps+1;
+    steps = steps + 1;
     
-    % calculating stoping condition 
-    residual = norm(A*x-b,inf);
-    res = norm(x-x_new,inf);
-    x=x_new;
+    % Evaluate stopping conditions on the new iterate.
+    res = norm(x - x_new, inf);
+    residual = norm(A * x_new - b, inf);
+    x = x_new;
 
-    if steps>=opts.maxIter
-        success=false;
-        reason="Solving took too long";
-        return 
+    if res <= opts.tolerance || residual <= opts.tolerance
+        break;
+    end
+
+    if steps >= opts.maxIter
+        success = false;
+        reason = "Solving took too long";
+        return
     end
 
 end
