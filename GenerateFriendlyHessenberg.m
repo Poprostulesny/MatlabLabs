@@ -1,7 +1,11 @@
-function [A, b] = GenerateFriendlyHessenberg(matrixSize, opts)
+function [A, x] = GenerateFriendlyHessenberg(matrixSize, opts)
 % Generates random Hessenberg matrices that satisfy the necessary
 % solvability criterion and have strong diagonal dominance, making them
 % ideal candidates for the Jacobi method.
+%
+% Author:
+%   Mateusz Leśniczak
+%
 % Input params:
 % matrixSize - desired size of the square matrix
 % (optional) opts - named field of optional values:
@@ -34,5 +38,5 @@ signs = 2 * randi([0, 1], matrixSize, 1) - 1;
 A = A - D + diag(diagVals .* signs);
 
 % Draw the right-hand-side vector.
-b = randi([-opts.maxVal, opts.maxVal], matrixSize, 1);
+x = randi([-opts.maxVal, opts.maxVal], matrixSize, 1);
 end

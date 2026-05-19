@@ -1,6 +1,10 @@
 function [allPassed, passCount, failCount, failReason, A_fail, b_fail, x_alg, x_true, successBySize, medianErrorBySize, sizes] = bulkTestParallel(minSize, maxSize, opts)
 % Bulk tests the SLE solver for consecutively larger, randomly generated
 % Hessenberg matrices, parallelizing the per-size test runs with PARFOR.
+%
+% Author:
+%   Mateusz Leśniczak
+%
 % Input:
 % minSize - minimal size of matrix used during the testing
 % maxSize - maximal size of matrix reached during the testing

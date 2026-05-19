@@ -1,6 +1,10 @@
 function [allPassed, passCount, failCount, failReason, A_fail, b_fail, x_alg, x_true, successBySize, medianErrorBySize, sizes] = bulkTest(minSize, maxSize, opts)
 % Bulk tests the SLE solver for consecutively larger, randomly generated
 % Hessenberg matrices.
+%
+% Author:
+%   Mateusz Leśniczak
+%
 % Input:
 % minSize - minimal size of matrix used during the testing
 % maxSize - maximal size of matrix reached during the testing
@@ -57,8 +61,8 @@ for s = sizes
     % Testing pass for a given size.
     for i = 1:opts.numPerSize
 
-        [A, b] = opts.generator(s, maxVal=opts.maxVal);
-        [errors(i), isAccepted, failureReason, x_alg, x_true] = validateSolver(A, b, tolerance=opts.tolerance, maxIter=opts.maxIter);
+        [A, x] = opts.generator(s, maxVal=opts.maxVal);
+        [errors(i), isAccepted, failureReason, x_alg, x_true] = validateSolver(A, x, tolerance=opts.tolerance, maxIter=opts.maxIter);
 
         if isAccepted == true
             passCount = passCount + 1;
@@ -67,7 +71,7 @@ for s = sizes
             allPassed = false;
             failCount = failCount + 1;
             A_fail = A;
-            b_fail = b;
+            b_fail = A*x;
             failReason = failureReason;
             if opts.stopAtFirst
                 warning("Stopped prematurely due to the stopAtFirst flag being set. Most analysis arrays will therefore be incomplete.")

@@ -1,6 +1,10 @@
-function [A, b] = GenerateRandomHessenberg(matrixSize, opts)
+function [A, x] = GenerateRandomHessenberg(matrixSize, opts)
 % Generates a random Hessenberg matrix with a reasonable condition number
 % and no zeros on the diagonal.
+%
+% Author:
+%   Mateusz Leśniczak
+%
 % Input params:
 % matrixSize - desired size of the square matrix
 % (optional) opts - named field of optional values:
@@ -33,5 +37,5 @@ while rcond(A) < 1e-10
 end
 
 % Draw the right-hand-side vector.
-b = randi([-opts.maxVal, opts.maxVal], matrixSize, 1);
+x = randi([-opts.maxVal, opts.maxVal], matrixSize, 1);
 end

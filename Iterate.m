@@ -1,5 +1,9 @@
 function x_new = Iterate(A, b, x)
 % Computes one iteration of the Jacobi method for a Hessenberg matrix.
+%
+% Author:
+%   Mateusz Leśniczak
+%
 % Input:
 % A - Hessenberg matrix
 % b - right-hand-side vector

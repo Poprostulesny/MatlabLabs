@@ -1,5 +1,9 @@
 function [x, success, reason, steps] = SolveHessenberg(A, b, opts)
 % Solves the linear system Ax = b using the Jacobi method for a Hessenberg matrix.
+%
+% Author:
+%   Mateusz Leśniczak
+%
 % Input params:
 % A - Hessenberg matrix
 % b - right-hand-side vector
