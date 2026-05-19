@@ -14,7 +14,9 @@ function [allPassed, passCount, failCount, failReason, A_fail, b_fail, x_alg, x_
 %       tolerance - error tolerance, defaults to 1e-4
 %       maxIter - maximal no. of solver iterations, defaults to 1e3
 %       generator - function handle for the matrix generator, defaults to GenerateRandomHessenberg
-%       stopAtFirst - accepted for compatibility; PARFOR cannot stop early
+%       stopAtFirst - boolean flag describing whether the function should stop at the first failed matrix; if true, the function falls back to the sequential implementation
+%       numWorkers - number of parallel workers; defaults to the local cluster limit
+%       profile - parallel profile name, defaults to Processes
 % Return:
 % allPassed - whether all of the solutions passed
 % passCount - number of passed tests
@@ -22,7 +24,7 @@ function [allPassed, passCount, failCount, failReason, A_fail, b_fail, x_alg, x_
 % failReason - reason for the last failure encountered
 % A_fail - last matrix for which the solution failed
 % b_fail - last vector for which the solution failed
-% x_alg - answer to the last failed test from the algorithm
+% x_alg - answer to the last test from the algorithm
 % x_true - ground truth answer from MATLAB's built-in solver
 % successBySize - number of passed tests for each matrix size
 % medianErrorBySize - median error for each matrix size
@@ -37,10 +39,45 @@ arguments
     opts.maxIter = 1000
     opts.generator = @GenerateRandomHessenberg
     opts.stopAtFirst = false;
+    opts.numWorkers = 16
+    opts.profile = "Processes"
 end
 
 if opts.stopAtFirst
-    warning("bulkTestParallel ignores stopAtFirst because PARFOR iterations cannot exit early.");
+    [allPassed, passCount, failCount, failReason, A_fail, b_fail, x_alg, x_true, successBySize, medianErrorBySize, sizes] = ...
+        bulkTest(minSize, maxSize, maxVal=opts.maxVal, numPerSize=opts.numPerSize, ...
+        tolerance=opts.tolerance, maxIter=opts.maxIter, generator=opts.generator, ...
+        stopAtFirst=opts.stopAtFirst);
+    return;
+end
+
+cluster = parcluster(opts.profile);
+if isempty(opts.numWorkers)
+    workerCount = cluster.NumWorkers;
+else
+    workerCount = opts.numWorkers;
+end
+
+if workerCount > cluster.NumWorkers
+    try
+        cluster.NumWorkers = workerCount;
+        saveProfile(cluster);
+    catch exc
+        warning("Requested %d workers, but the %s parallel profile allows only %d. Using %d workers instead. Reason: %s", ...
+            workerCount, string(opts.profile), cluster.NumWorkers, cluster.NumWorkers, exc.message);
+        workerCount = cluster.NumWorkers;
+    end
+end
+
+pool = gcp("nocreate");
+if isempty(pool)
+    parpool(opts.profile, workerCount);
+elseif pool.NumWorkers == 1 && workerCount > 1
+    delete(pool);
+    parpool(opts.profile, workerCount);
+elseif ~isempty(opts.numWorkers) && pool.NumWorkers ~= workerCount
+    delete(pool);
+    parpool(opts.profile, workerCount);
 end
 
 sizes = ceil(minSize):(maxSize);
@@ -54,48 +91,110 @@ b_fail = [];
 x_alg = [];
 x_true = [];
 failReason = "ok";
-tic
-for y = 1:numel(sizes)
-    s = sizes(y);
 
-    errors = NaN(opts.numPerSize, 1);
-    success_flags = false(opts.numPerSize, 1);
-    fail_reasons_local = strings(opts.numPerSize, 1);
-    A_local = cell(opts.numPerSize, 1);
-    b_local = cell(opts.numPerSize, 1);
-    x_alg_local = cell(opts.numPerSize, 1);
-    x_true_local = cell(opts.numPerSize, 1);
-    parfor i = 1:opts.numPerSize
-        [A_i, b_i] = opts.generator(s, maxVal=opts.maxVal);
-        [errors(i), success_flags(i), fail_reasons_local(i), x_alg_i, x_true_i] = ...
-            validateSolver(A_i, b_i, tolerance=opts.tolerance, maxIter=opts.maxIter);
+numTasks = numel(sizes) * opts.numPerSize;
+if numTasks == 0
+    return;
+end
 
-        A_local{i} = A_i;
-        b_local{i} = b_i;
-        x_alg_local{i} = x_alg_i;
-        x_true_local{i} = x_true_i;
+chunkSize = max(1, min(opts.numPerSize, max(10, ceil(opts.numPerSize / max(1, 4 * workerCount)))));
+numChunks = ceil(numTasks / chunkSize);
+
+taskIdxByChunk = cell(numChunks, 1);
+errorsByChunk = cell(numChunks, 1);
+successByChunk = cell(numChunks, 1);
+failTaskByChunk = zeros(numChunks, 1);
+failAByChunk = cell(numChunks, 1);
+failBByChunk = cell(numChunks, 1);
+failReasonByChunk = strings(numChunks, 1);
+lastTaskByChunk = zeros(numChunks, 1);
+lastXAlgByChunk = cell(numChunks, 1);
+lastXTrueByChunk = cell(numChunks, 1);
+
+parfor chunkIdx = 1:numChunks
+    chunkStart = (chunkIdx - 1) * chunkSize + 1;
+    chunkEnd = min(numTasks, chunkIdx * chunkSize);
+    localCount = chunkEnd - chunkStart + 1;
+
+    localTaskIdx = zeros(localCount, 1);
+    localErrors = NaN(localCount, 1);
+    localSuccess = false(localCount, 1);
+    localFailTask = 0;
+    localFailA = [];
+    localFailB = [];
+    localFailReason = "ok";
+    localLastTask = 0;
+    localLastXAlg = [];
+    localLastXTrue = [];
+
+    for localIdx = 1:localCount
+        taskIdx = chunkStart + localIdx - 1;
+        sizeIdx = ceil(taskIdx / opts.numPerSize);
+        s = sizes(sizeIdx);
+
+        [A_i, x_i] = opts.generator(s, maxVal=opts.maxVal);
+        [localErrors(localIdx), localSuccess(localIdx), failureReason, x_alg_i, x_true_i] = ...
+            validateSolver(A_i, x_i, tolerance=opts.tolerance, maxIter=opts.maxIter);
+
+        localTaskIdx(localIdx) = taskIdx;
+        localLastTask = taskIdx;
+        localLastXAlg = x_alg_i;
+        localLastXTrue = x_true_i;
+
+        if localSuccess(localIdx) ~= true
+            localFailTask = taskIdx;
+            localFailA = A_i;
+            localFailB = A_i * x_i;
+            localFailReason = failureReason;
+        end
     end
 
-    successBySize(y) = sum(success_flags);
-    passCount = passCount + successBySize(y);
+    taskIdxByChunk{chunkIdx} = localTaskIdx;
+    errorsByChunk{chunkIdx} = localErrors;
+    successByChunk{chunkIdx} = localSuccess;
+    failTaskByChunk(chunkIdx) = localFailTask;
+    failAByChunk{chunkIdx} = localFailA;
+    failBByChunk{chunkIdx} = localFailB;
+    failReasonByChunk(chunkIdx) = localFailReason;
+    lastTaskByChunk(chunkIdx) = localLastTask;
+    lastXAlgByChunk{chunkIdx} = localLastXAlg;
+    lastXTrueByChunk{chunkIdx} = localLastXTrue;
+end
 
-    failed_idx = find(~success_flags);
-    failCount = failCount + numel(failed_idx);
-    if ~isempty(failed_idx)
-        allPassed = false;
-        last_fail = failed_idx(end);
-        A_fail = A_local{last_fail};
-        b_fail = b_local{last_fail};
-        x_alg = x_alg_local{last_fail};
-        x_true = x_true_local{last_fail};
-        failReason = fail_reasons_local(last_fail);
-    end
+errorsByTask = NaN(numTasks, 1);
+successByTask = false(numTasks, 1);
+for chunkIdx = 1:numChunks
+    taskIdx = taskIdxByChunk{chunkIdx};
+    errorsByTask(taskIdx) = errorsByChunk{chunkIdx};
+    successByTask(taskIdx) = successByChunk{chunkIdx};
+end
 
-    valid_errors = abs(errors);
-    medianErrorBySize(y) = median(valid_errors, "omitnan");
+for sizeIdx = 1:numel(sizes)
+    taskRange = ((sizeIdx - 1) * opts.numPerSize + 1):(sizeIdx * opts.numPerSize);
+    successBySize(sizeIdx) = sum(successByTask(taskRange));
+
+    valid_errors = abs(errorsByTask(taskRange));
+    medianErrorBySize(sizeIdx) = median(valid_errors, "omitnan");
     if all(isnan(valid_errors))
-        medianErrorBySize(y) = NaN;
+        medianErrorBySize(sizeIdx) = NaN;
     end
 end
-toc
+
+passCount = sum(successByTask);
+failCount = numTasks - passCount;
+allPassed = failCount == 0;
+
+[lastTask, lastTaskChunk] = max(lastTaskByChunk);
+if lastTask > 0
+    x_alg = lastXAlgByChunk{lastTaskChunk};
+    x_true = lastXTrueByChunk{lastTaskChunk};
+end
+
+[lastFailTask, lastFailChunk] = max(failTaskByChunk);
+if lastFailTask > 0
+    A_fail = failAByChunk{lastFailChunk};
+    b_fail = failBByChunk{lastFailChunk};
+    failReason = failReasonByChunk(lastFailChunk);
+end
+
 end
