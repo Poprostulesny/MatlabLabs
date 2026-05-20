@@ -1,4 +1,4 @@
-function x_new = Iterate(A, b, x)
+function x_new = Iterate(A, b, x, isUpper)
 % Computes one iteration of the Jacobi method for a Hessenberg matrix.
 %
 % Author:
@@ -8,18 +8,17 @@ function x_new = Iterate(A, b, x)
 % A - Hessenberg matrix
 % b - right-hand-side vector
 % x - current solution vector
+% isUpper - whether the given Hessenberg matrix is an upper Hessenberg matrix
 % Return:
 % x_new - updated solution vector
 
 n = size(A, 1);
 x_new = zeros(n, 1);
 D = diag(A);
-isUpper = true;
+
 
 % Detect whether we are working with an upper or lower Hessenberg matrix.
-if size(A, 1) > 2 && A(size(A, 1), 1) ~= 0
-    isUpper = false;
-end
+
 
 for y = 1:n
     rowSum = 0;

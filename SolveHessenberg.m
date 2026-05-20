@@ -28,12 +28,12 @@ x = zeros(size(A, 1), 1);
 success = true;
 steps = 0;
 reason = "ok";
+isUpper = norm(tril(A, -2), inf) == 0;
 
 % Iteration loop.
 while true
-
     try
-        x_new = Iterate(A, b, x);
+        x_new = Iterate(A, b, x, isUpper);
     catch exc
         success = false;
         reason = exc.message;
