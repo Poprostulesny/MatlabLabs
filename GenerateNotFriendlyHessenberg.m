@@ -22,7 +22,7 @@ function [A, x] = GenerateNotFriendlyHessenberg(matrixSize, opts)
 arguments
     matrixSize
     opts.maxVal = 1e5
-    opts.difficulty
+    opts.difficulty = 0.95
 end
 
 d = 1 + rand(matrixSize, 1);

@@ -47,16 +47,20 @@ while true
     residual = norm(A * x_new - b, inf);
     x = x_new;
 
-    if res <= opts.tolerance || residual <= opts.tolerance
+    if res <= opts.tolerance && residual <= opts.tolerance
         break;
     end
 
     if steps >= opts.maxIter
         success = false;
         reason = "Solving took too long";
-        return
+        break;
     end
 
 end
-
+if any(~isfinite(x_new))
+    success = false;
+    reason = "Returned NaN or inf";
+    return;
+end
 end

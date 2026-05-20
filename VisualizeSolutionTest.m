@@ -1,5 +1,10 @@
 % File checking and visualizing how the method works for different matrix types.
 %
+% Due to the fact that we were prohibited to use functions like display and printf, 
+% the outputs of the program tests can be accessed both from the terminal, 
+% and from the matlab variables window, 
+% where they have been organized to the best of my abilities in the programTestSummary variable
+%
 % Author:
 %   Mateusz Leśniczak
 
@@ -8,7 +13,7 @@ tolerance = 1e-4;
 maxVal = 1e3;
 minSize = 3;
 maxSize = 100;
-numPerSize = 10;
+numPerSize = 500;
 
 % Program tests - matrices of size 6-10.
 programTestSizes = 6:10;
@@ -21,8 +26,8 @@ for testIdx = 1:numel(programTestSizes)
     matrixSize = programTestSizes(testIdx);
     [A, X] = GenerateFriendlyHessenberg(matrixSize, maxVal=maxVal);
     B = A * X;
-    [X_solution, solverSuccess, reason, steps] = SolveHessenberg(A, B, tolerance=tolerance);
-    solutionError = norm(X_solution - X, inf);
+   
+    [solutionError,solverSuccess, reason, X_solution, ~]=validateSolver(A,X, tolerance=tolerance);
 
     programTestsForConvergentMatrices(testIdx).matrixSize = matrixSize;
     programTestsForConvergentMatrices(testIdx).A = A;
@@ -49,8 +54,8 @@ for testIdx = 1:numel(programTestSizes)
     matrixSize = programTestSizes(testIdx);
     [A, X] = GenerateNotFriendlyHessenberg(matrixSize, maxVal=maxVal, difficulty=0.98);
     B = A * X;
-    [X_solution, solverSuccess, reason, steps] = SolveHessenberg(A, B, tolerance=tolerance);
-    solutionError = norm(X_solution - X, inf);
+    [solutionError,solverSuccess, reason, X_solution, ~]=validateSolver(A,X, tolerance=tolerance);
+   
 
     programTestsForBarelyConvergentMatrices(testIdx).matrixSize = matrixSize;
     programTestsForBarelyConvergentMatrices(testIdx).A = A;
@@ -77,8 +82,7 @@ for testIdx = 1:numel(programTestSizes)
     matrixSize = programTestSizes(testIdx);
     [A, X] = GenerateRandomHessenberg(matrixSize, maxVal=maxVal);
     B = A * X;
-    [X_solution, solverSuccess, reason, steps] = SolveHessenberg(A, B, tolerance=tolerance);
-    solutionError = norm(X_solution - X, inf);
+    [solutionError,solverSuccess, reason, X_solution, ~]=validateSolver(A,X, tolerance=tolerance);
 
     programTestsForRandomMatrices(testIdx).matrixSize = matrixSize;
     programTestsForRandomMatrices(testIdx).A = A;
@@ -102,16 +106,16 @@ end
 
 
 programTestSummary = struct();
-programTestSummary.convergentMatrices = struct2table(rmfield(programTestsForConvergentMatrices, ["A", "X", "B", "X_solution"]));
-programTestSummary.barelyConvergentMatrices = struct2table(rmfield(programTestsForBarelyConvergentMatrices, ["A", "X", "B", "X_solution"]));
-programTestSummary.randomMatrices = struct2table(rmfield(programTestsForRandomMatrices, ["A", "X", "B", "X_solution"]));
+programTestSummary.convergentMatrices = struct2table(programTestsForConvergentMatrices);
+programTestSummary.barelyConvergentMatrices = struct2table(programTestsForBarelyConvergentMatrices);
+programTestSummary.randomMatrices = struct2table(programTestsForRandomMatrices);
 
 
 % Method tests
 
-[~, passCount, failCount, failReason, A_fail, b_fail, x_alg, x_true, successRandom, medianRandom, sizes] = bulkTest(minSize, maxSize, maxVal=maxVal, numPerSize=numPerSize, tolerance=tolerance, generator=@GenerateRandomHessenberg);
-[~, ~, ~, ~, ~, ~, ~, ~, successHard, medianHard, ~] = bulkTest(minSize, maxSize, maxVal=maxVal, numPerSize=numPerSize, tolerance=tolerance, generator=@GenerateNotFriendlyHessenberg);
-[~, ~, ~, ~, ~, ~, ~, ~, successEasy, medianEasy, ~] = bulkTest(minSize, maxSize, maxVal=maxVal, numPerSize=numPerSize, tolerance=tolerance, generator=@GenerateFriendlyHessenberg);
+[~, passCount, failCount, failReason, A_fail, b_fail, x_alg, x_true, successRandom, medianRandom, sizes] = bulkTestParallel(minSize, maxSize, maxVal=maxVal, numPerSize=numPerSize, tolerance=tolerance, generator=@GenerateRandomHessenberg);
+[~, ~, ~, ~, ~, ~, ~, ~, successHard, medianHard, ~] = bulkTestParallel(minSize, maxSize, maxVal=maxVal, numPerSize=numPerSize, tolerance=tolerance, generator=@GenerateNotFriendlyHessenberg);
+[~, ~, ~, ~, ~, ~, ~, ~, successEasy, medianEasy, ~] = bulkTestParallel(minSize, maxSize, maxVal=maxVal, numPerSize=numPerSize, tolerance=tolerance, generator=@GenerateFriendlyHessenberg);
 
 
 % Plotting the data

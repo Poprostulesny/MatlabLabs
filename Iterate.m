@@ -22,7 +22,6 @@ D = diag(A);
 
 for y = 1:n
     rowSum = 0;
-
     % Calculate column bounds for nonzero entries in the current row.
     if isUpper == true
          xStart = max(1, y - 1);
@@ -31,7 +30,6 @@ for y = 1:n
         xStart = 1;
         xEnd = min(n, y + 1);
     end
-    
     % Compute the next Jacobi iterate.
     for xi = xStart:xEnd
         if y == xi
@@ -39,7 +37,7 @@ for y = 1:n
         end
         rowSum = rowSum + A(y, xi) * x(xi);
     end
-
+    
     % Detect division-by-zero errors.
     if D(y) == 0
         error("Division by zero encountered")
