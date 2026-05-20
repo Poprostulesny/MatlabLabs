@@ -41,10 +41,6 @@ if solver_success~=true
     return;
 end
 
-if any(~isfinite(x_my))
-    reason = "Returned NaN or inf";
-    return
-end
 
 
 if max_error>=opts.tolerance

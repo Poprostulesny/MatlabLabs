@@ -40,7 +40,7 @@ while true
         return;
     end
     
-    steps = steps + 1;
+    steps = steps + 1;  
     
     % Evaluate stopping conditions on the new iterate.
     res = norm(x - x_new, inf);
@@ -58,6 +58,7 @@ while true
     end
 
 end
+
 if any(~isfinite(x_new))
     success = false;
     reason = "Returned NaN or inf";

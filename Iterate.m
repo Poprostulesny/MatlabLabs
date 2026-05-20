@@ -16,10 +16,6 @@ n = size(A, 1);
 x_new = zeros(n, 1);
 D = diag(A);
 
-
-% Detect whether we are working with an upper or lower Hessenberg matrix.
-
-
 for y = 1:n
     rowSum = 0;
     % Calculate column bounds for nonzero entries in the current row.
